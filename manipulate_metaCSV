@@ -1,0 +1,83 @@
+# ---- pre-processing ----
+# useful command to find the column number of column in the meta.csv table
+head -1 meta.csv | tr ',' '\n' | nl
+
+# noise detection
+# If Kaleidoscope batch processing is with file copying, then also the free version of the 
+# programme does noise detection by moving detected files into a subfolder (of the output folder)
+# called NOISE. This information is not available in the meta.csv file. The follwowing command 
+# inserts the word "Noise" into the AUTO ID column of meta.csv if the recording has been detected as noise.
+# Note: the original EMT app Auto ID is always present in the original file name.
+perl -F, -lane 'if($.==1){print}else{($file = $F[2]) =~ s/^(.*)\.(.*)/$1_000.$2/; $file = "NOISE/" . $file; if(-e $file){$F[17] = "Noise"}; print join(",", @F)}' meta.csv > meta_with_noise_in_Auto_ID.csv
+
+# sets the column for Manual ID empty as it should be before manual inspection of recordings
+perl -F"," -lane 'if($.==1){for($i=0;$i<@F;$i++){if($F[$i] =~ /MANUAL ID/){$Spalte=$i; print}}}else{$F[$Spalte] = ""; print join(",", @F)}' meta.csv
+
+# if you have edited and saved the meta.csv files in Kaleidoscope, fields will be separated by ",". 
+# That is because in the MANUAL ID column entries with more than one species have species labels sparated by a comma.
+# If you want to clear the MANUAL ID column from such a file, you have to use the following command:
+perl -F/\",\"/ -lane 'if($.==1){for($i=0;$i<@F;$i++){if($F[$i] =~ /MANUAL ID/){$Spalte=$i; print}}}else{$F[$Spalte] = "\"\""; print join("\",\"", @F)}' meta_time_sorted_empty_manual_id_NR_column.csv
+
+# get numbered list of column names
+head -1 meta.csv | tr ',' '\n' | cat -n
+
+# fix path to folder (after renaming of the folder)
+sed 's/ADATA SD700/ADATA_SD700/' meta.csv
+
+# sort meta.csv first according to date, then according to time
+# that way showing recordings in chronological order
+cat <(head -1 meta.csv) <(tail +2 meta.csv | sort -t, -k5 -k6)
+#
+# adding a record number column that allows resoration of original sort
+# order after sorting along other columns in Kaleidoscope
+perl -F"," -ne 'chomp; if($.==1){print $_, ",NR", "\n";}else{print $_, ",", $.-1, "\n";}' meta_time_sorted_empty_manual_id.csv | tr -d '\r' > meta_time_sorted_empty_manual_id_NR_column.csv
+
+# --> alternative to the above two commands
+# take header line and add new column header "NR" at the end (Kaleidoscope emits an error if at the beginning of the table)
+head -1 meta.csv | tr ',' '\n' | tr -d '\r' | cat - <(echo "NR") | tr '\n' ',' | sed 's/,$//'
+# sort data lines by date then by time. Then add a new line number column at the end.
+tail +2 meta.csv | sort -t, -k5 -k6 | tr -d '\r' | tr '\t' ',' | awk -F, 'BEGIN{OFS=","}{print $0, $1}' | cut -d, -f2- | sed -E 's/,[[:space:]]+/,/' 
+# <--
+
+# ---- post-processing ----
+# joining ID Notes column from id_notes.csv to meta.csv after editing id_notes.csv in spreadsheet app.
+# The file id_notes.csv needs to have six columns with IN FILE as the first column
+# and ID NOTES as the sixth column
+join -t, -1 3 -2 1  meta_time_sorted_empty_manual_id_NR_column.csv <(cut -d, -f1,6 id_notes.csv) \
+| tr -d '\r' > meta_time_sorted_empty_manual_id_NR_column_with_id_notes.csv
+
+#
+#
+# KML
+#
+#
+
+# The following command can be used to convert the meta.csv into a KML file containing only points 
+# where the Manual ID contains HYPSAV (and potentially other species names if more than one species
+# occur in a recording)
+ogr2ogr \
+-f KML meta_HYPSAV.kml \
+meta.csv \
+-a_srs 'EPSG:4326' \
+-oo X_POSSIBLE_NAMES=LON* -oo Y_POSSIBLE_NAMES=LAT* \
+-oo KEEP_GEOM_COLUMNS=NO \
+-where "\"MANUAL ID\" LIKE '%HYPSAV%'" \
+-dsco NameField="IN FILE"
+
+# extract the style definition from a Session KML of EMT app
+perl -0777 -ne 'while(/(<Style.*?<\/Style>)/sgm){print "\t$1\n";}' Session*kml > style_extract
+
+
+
+# add marker style XML tag to kml for Wildlife Acoustics labels (needs to be specified in the kml)
+perl -lne'if(/MANUAL ID/ and /SimpleData/){($SPECIES) = $_ =~ />(.*)</}elsif(/<\/ExtendedData>/){print; print "\t<styleUrl>#MarkerStyle", $SPECIES, "</styleUrl>"}else{print}' meta.kml
+
+
+
+
+
+
+
+
+
+
