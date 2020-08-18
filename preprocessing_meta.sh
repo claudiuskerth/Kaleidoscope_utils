@@ -59,7 +59,7 @@ mv -f meta_noCR.csv meta.csv
 
 # make MANUAL ID column blank
 echo "making manual id column blank ..."
-perl -F"," -i -lane 'if($.==1){print; for($i=0;$i<@F;$i++){if($F[$i] =~ /MANUAL ID/){$Spalte=$i}}}else{$F[$Spalte] = ""; print join(",", @F)}' meta.csv
+perl -F"," -i -lane 'if($.==1){print; for($i=0;$i<@F;$i++){if($F[$i] =~ /^MANUAL ID$/){$Spalte=$i}}}else{$F[$Spalte] = ""; print join(",", @F)}' meta.csv
 
 # sort meta.csv by date, then by time
 echo "sorting meta.csv by date and time ..."
@@ -77,11 +77,11 @@ rm -f atem.vsc
 # if yes, then add noise label to AUTO ID column
 if [ -e NOISE ] 
 	then 
-		echo "inserting label \"Noise\" in AUTO ID column ..."
+		echo "Inserting label \"Noise\" in AUTO ID column ..."
 		perl -F, -i -lane 'if($.==1){print}else{($file = $F[2]) =~ s/^(.*)\.(.*)/$1_000.$2/; $file = "NOISE/" . $file; if(-e $file){$F[17] = "Noise"}; print join(",", @F)}' meta.csv
 	else
 		echo "No directory called NOISE found. Run Kaleidoscope batch process with appropriate settings."
-		echo "cannot insert noise label in AUTO ID column."
+		echo "Cannot insert noise label in AUTO ID column."
 fi
 
 # create id_notes.csv for note taking in spreadsheet app

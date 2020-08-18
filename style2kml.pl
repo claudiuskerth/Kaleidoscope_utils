@@ -101,7 +101,7 @@ system($cmd) == 0 or die $?;
 
 
 # open the KML to which the style should be added
-open (my $metaKML, "meta_raw.kml") or die $?;
+open (my $metaKML, "meta_raw.kml") or die $!;
 my ($manual_id, $date, $time);
 
 # add required style info
@@ -128,4 +128,4 @@ while(<$metaKML>){
 }
 
 # clean up
-system("rm -f meta_raw.kml") == 0 or die $!;
+system("rm -f meta_raw.kml") == 0 or die $?;

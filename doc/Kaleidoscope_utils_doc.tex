@@ -18,13 +18,16 @@
 %% ---- package for formatting code with line numbers
 \usepackage{listings}
 \lstset{
-backgroundcolor = \color{yellow},
-frame = single,
-breaklines = false,
+backgroundcolor = \color{lightgray},
+frame = single, % single,false
+framerule = 1.0pt,
+rulesep = 0pt,
+rulecolor = \color{lightgray},
+breaklines = true,
 firstnumber = 1,
 numbers = left,
 language = Bash,
-basicstyle = \ttfamily,
+basicstyle = \ttfamily\small,
 showstringspaces = false
 }
 
@@ -50,7 +53,7 @@ colorlinks=true,%
 \pagestyle{fancy} % options: empty , plain , fancy
 %%\renewcommand{\headrulewidth}{0pt} % customise the layout...
 \lhead{Claudius Kerth} % alined left in header
-\chead{\textbf{Kaleidoscope Utils doc}}  % alined centrically in header
+\chead{\textbf{Kaleidoscope Utils Documentation}}  % alined centrically in header
 \rhead{\today}  % alined right in header
 \usepackage{lastpage} % in order to call the number of the last page in the footer
 \lfoot{}
@@ -130,13 +133,12 @@ colorlinks=true,%
 %
 %
 %
-After batch processing the MANUAL ID column in \texttt{meta.csv} contains the same as the AUTO ID column. This is unfortunate, since it is not clear whether a manual review of the auto id has taken place. An empty MANUAL ID field should mean that for this recording no manual inspection has been done yet. One way to make this column blank before manual inspection would be to open \texttt{meta.csv} in a spreadsheet and clearing the column manually. Another possibility is to use the following command line (one line):
+After batch processing, the MANUAL ID column in \texttt{meta.csv} contains the same as the AUTO ID column. This is unfortunate, since it is not clear whether a manual review of the auto id has taken place. An empty MANUAL ID field should mean that for this recording no manual inspection has been done yet. One way to make this column blank before manual inspection would be to open \texttt{meta.csv} in a spreadsheet and clearing the column manually. Another possibility is to use the following command line (one line):
 
 \begin{lstlisting}
-perl -F"," -lane 'if($.==1){for($i=0;$i<@F;$i++){
-if($F[$i] =~ /MANUAL ID/){$Spalte=$i; print}}}
+perl -F"," -i -lane 'if($.==1){print; for($i=0;$i<@F;$i++)
+{if($F[$i] =~ /^MANUAL ID$/){$Spalte=$i}}}
 else{$F[$Spalte] = ""; print join(",", @F)}' meta.csv
-> meta_MANUAL_ID_blank.csv
 \end{lstlisting}
 
 This command could be part of a pre-processing script for \texttt{meta.csv}.
@@ -168,16 +170,15 @@ cat <(head -1 meta.csv) <(tail +2 meta.csv | sort -t, -k5 -k6)
 %
 %
 %
-Occasionally I want to sort the table in the Results window (\texttt{meta.csv}) of \emph{K} Viewer according to AUTO ID or maybe some other column. In order to quickly restore the previous chronological sorting order it would be nice to have an extra column with line numbers (or \underline{n}umber of \underline{r}ecord) assigned after chronological sorting. Again, one could open \texttt{meta.csv} in a spreadsheet to add this column or one could use the following command line:
+Occasionally I want to sort the table in the Results window (\texttt{meta.csv}) of \textsf{K} Viewer according to AUTO ID or maybe some other column. In order to quickly restore the previous chronological sorting order it would be nice to have an extra column with line numbers (or \underline{n}umber of \underline{r}ecord) assigned after chronological sorting. Again, one could open \texttt{meta.csv} in a spreadsheet to add this column or one could use the following command line:
 
 \begin{lstlisting}
 perl -F"," -ne 'chomp; if($.==1){print $_, ",NR", "\n";}
 else{print $_, ",", $.-1, "\n";}' meta_sorted.csv 
-| tr -d '\r' 
 > meta_sorted_NRcolumn.csv
 \end{lstlisting}
 
-Note, that the NR column cannot be added as the first column or \emph{K} viewer will not be able to open the file. The third line in the above depiction of the command line removes a carriage return if it exists (it does no harm if it doesn't), which shouldn't be there on a Unix-like system.
+Note, that the NR column cannot be added as the first column or \textsf{K} viewer will not be able to open the file.
 
 %
 %
@@ -186,9 +187,8 @@ Note, that the NR column cannot be added as the first column or \emph{K} viewer 
 %
 %
 %
-How good ist \emph{K} in designating recordings as noise? Are there many false positives or false negatives?
 
-With the free version of Kaleidoscope, noise detection only works by copying files to the output directory, unfortunately. The \texttt{meta.csv} file does not contain an indication of whether a file got detected as noise. However, in the output of the Pro version of \emph{K}, one can find in the \texttt{id.csv} file (only produced by the pro version) files that got designated as noise.
+With the free version of Kaleidoscope, noise detection only works by copying files to the output directory, unfortunately. The \texttt{meta.csv} file does not contain an indication of whether a file got detected as noise. However, in the output of the Pro version of \textsf{K}, one can find in the \texttt{id.csv} file (only produced by the pro version) files that got designated as noise.
 
 %
 %
@@ -220,34 +220,12 @@ print join(",", @F)
 
 Note that on line 2 in the command, the file name taken from \texttt{meta.csv} has to be modified: the string "\_000" has to be inserted. The copied files in the output directory of batch processing have this additional string, but \texttt{meta.csv} contains the names of the source files. The command checks whether a recording file has been put into the subfolder NOISE.
 
-I have used the following settings for noise detection (set in the "Signal Params" tab):
-\begin{itemize}
-\item minimum frequency of 15 kHz for signals
-\item minimum of 2 ms and maximum of 100 ms for the duration of individual pulses
-\item maximum of 300 ms for the gap between pulses
-\item minimum number of 3 pulses per recording
-\end{itemize}
-
-These settings can be found in the output folder in the file \texttt{settings.ini} under section \texttt{[analysis]}. They are not the standard ones and my need to be adjusted based on the distribution of signal parameters from different species.
-
-I have visually checked the 84 recordings that have been detected as noise by Kaleidoscope with these settings. Six of these recordings \emph{did} contain bat calls, either faint or among loud cricket calls (fig. \ref{NoID_20200723_005253}).
-
-\begin{figure}[htbp]
-\begin{center}
-\includegraphics[width=.9\textwidth]{Fig/NoID_20200723_005253}\vspace{2em}
-\includegraphics[width=.9\textwidth]{Fig/NoID_20200723_003513}
-\caption{Recordings that have been detected as noise. Top: Recording \texttt{NoID\_20200723\_005253} contains faint calls from a \textit{Myotis} species. Bottom: Recording \texttt{NoID\_20200723\_003513} contains bat calls on a background of loud cricket calls.}
-\label{NoID_20200723_005253}
-\end{center}
-\end{figure}
-
-%
 %
 %
 \subsection{How to add more than one species label per recording file}
 %
 %
-%
+
 Under \fbox{Kaleidoscope Help} $\rightarrow$ \fbox{Reference Guide} $\rightarrow$ \fbox{Metadata Panel} one can find the following info:
 
 \begin{quote}
@@ -256,7 +234,15 @@ To assign multiple manual IDs, hold the Control key down while pressing one of t
 
 On a Mac press the \fbox{cmd} key instead of the \fbox{ctrl} key. The choice of a comma to separate species labels is unfortunate since \texttt{meta.csv} is comma separated. I would therefore recommend to edit multi-species labels so that they are separated by a semicolon.
 
-Usually, when you save \texttt{meta.csv} with \emph{K} it will add double quotes around each field entry, which disrupts further command line manipulation of this important file. Unless you have multi-species labels that are separated by a comma instead of a semicolon, it is save to remove these double quotes again:
+Usually, when you save \texttt{meta.csv} with \textsf{K} it will add double quotes around each field entry, which disrupts further command line manipulation of this important file. If you have multi-species labels that are separated by a comma the use the following command line to separate them by a semicolon:
+
+\begin{lstlisting}[numbers=none]
+perl -F/\",\"/  -i -lane 
+'map {tr/,/;/} @F; print join(",", @F)' meta.csv
+\end{lstlisting}
+
+
+Afterwards, it is save to remove double quotes:
 
 \begin{lstlisting}[numbers=none]
 tr -d '"' < meta.csv > meta_noquotmark.csv
@@ -276,9 +262,9 @@ In the Metadata panel there is a field called notes. Under \fbox{Kaleidoscope He
 \begin{quote}
 Under Notes there is an \emph{editable} field which contains field notes and GUANO format metadata if present.
 \end{quote}
-I have tried to edit this field with the free version of \emph{K}, but it is not saved. It may be that only during batch processing, information that pertains to the whole session of recordings can be saved here. Notes for individual recordings cannot be saved here, at least with the free version of \emph{K}.
+I have tried to edit this field with the free version of \textsf{K}, but it is not saved. It may be that only during batch processing, information that pertains to the whole session of recordings can be saved here. Notes for individual recordings cannot be saved here, at least with the free version of \textsf{K}.
 
-A workaround, although more error prone than editing directly in the results window of \emph{K} Viewer, is to create an \texttt{id\_notes.csv} file that contains a selection of columns from \texttt{meta.csv} and then open that file in a spreadsheet application for editing together with \emph{K} Viewer. Since \texttt{meta.csv} already contains a NOTES column, I suggest naming the new notes column "ID NOTES".
+A workaround, although more error prone than editing directly in the results window of \textsf{K} Viewer, is to create an \texttt{id\_notes.csv} file that contains a selection of columns from \texttt{meta.csv} and then open that file in a spreadsheet application for editing together with \textsf{K} Viewer. Since \texttt{meta.csv} already contains a NOTES column, I suggest naming the new notes column "ID NOTES".
 
 The following command will display a numbered list of column headers from \texttt{meta.csv}. 
 
@@ -317,12 +303,33 @@ head -1 meta.csv  | tr ',' '\n' | nl
     30	NR
 \end{lstlisting}
 
-I then use the following command to create a copy of \texttt{meta.csv} with a selection of columns
+I can then use the following command to create a copy of \texttt{meta.csv} with a selection of columns
 \begin{lstlisting}[numbers=none]
 cut -d, -f3,5-6,18,24,30 meta.csv > id_notes.csv
 \end{lstlisting}
 
 The new "ID NOTES" column can be added to \texttt{id\_notes.csv} in the spreadsheet application. With it \texttt{id\_notes.csv} will have 7 columns. The file format needs to stay the same.
+
+%
+%
+\subsection{Preprocessing script}
+%
+%
+
+The command lines documented above have been wrapped up in a script called \texttt{preprocessing\_meta.sh}. It should be run from within the output directory of \textsf{K} batch processing and before manual review of auto id. The scripts takes no command line arguments.
+It produces a new \texttt{meta.csv} while preserving the original in \texttt{meta\_orig.csv}.
+
+Specifically the script does the following:
+\begin{enumerate}
+\item check for signs that preprocessing has already been run on meta.csv
+\item make a backup of the original meta.csv
+\item make the MANUAL ID column blank
+\item sort \texttt{meta.csv} by date and time
+\item add a line number column
+\item check if a directory called NOISE exists, if yes, then add noise label to AUTO ID column
+\item create \texttt{id\_notes.csv} for note taking in a spreadsheet app
+\end{enumerate}
+
 
 %
 %
@@ -338,11 +345,11 @@ The new "ID NOTES" column can be added to \texttt{id\_notes.csv} in the spreadsh
 %
 %
 
-After manual review of recordings in \emph{K} Viewer and adding corresponding notes to \texttt{id\_notes.csv}, the "ID NOTES" column (here the seventh column) can be joined back to \texttt{meta.csv} with the following command line (one line):
+After manual review of recordings in \textsf{K} Viewer, filling the MANUAL ID column and adding corresponding notes to \texttt{id\_notes.csv}, the "ID NOTES" column (here the seventh column) can be joined back to \texttt{meta.csv} with the following command line (one line):
 
 \begin{lstlisting}
 join -t, -1 3 -2 1  meta.csv <(cut -d, -f1,7 id_notes.csv) 
-| tr -d '\r' > meta_with_id_notes.csv
+> meta_with_id_notes.csv
 \end{lstlisting}
 
 
@@ -356,12 +363,9 @@ The EMT app creates a KML file for each recording session. It would be nice to c
 
 \begin{lstlisting}[language=Perl, backgroundcolor = \color{OliveGreen}, basicstyle=\small\ttfamily\color{white}, keywordstyle=\color{YellowOrange}\bfseries,
 identifierstyle=\color{Cyan}\bfseries, stringstyle=\color{BrickRed}, commentstyle=\color{blue}, title=\texttt{style2kml.pl}, numbers=left, numberstyle=\color{black}]
-use strict;
-use warnings;
+my $usage = "usage: 
 
-my $usage = "
-
-usage: $0 --meta <your meta.csv> --EMT_kml <kml from EMT app>
+$0 --meta <your meta.csv> --EMT_kml <kml from EMT app> [--species <species abbreviation>]
 
 --meta your meta.csv file name (and path)
 --EMT_kml any Session*kml file name from EMT app 
@@ -370,14 +374,11 @@ usage: $0 --meta <your meta.csv> --EMT_kml <kml from EMT app>
 prints result to STDOUT
 \n";
 
-system("which ogr2ogr > /dev/null") == 0 or 
-die "You need to have the utility ogr2ogr installed and in your PATH.
+system("which ogr2ogr > /dev/null") == 0 or die "You need to have the utility ogr2ogr installed and in your PATH.
 https://gdal.org/download.html\n";
 
-my ($meta, $EMT_kml);
-my $species = ""; 
+my ($meta, $EMT_kml, $species);
 
-# does what it says in the name
 sub parse_command_line {
     while(@ARGV){
         $_ = shift @ARGV;
@@ -385,11 +386,12 @@ sub parse_command_line {
         elsif(/^-{1,2}species$/){$species = shift @ARGV;}
         elsif(/^--EMT-kml$/){$EMT_kml = shift @ARGV;}
         elsif(/^-{1,2}h(elp)?$/){die $usage;}
-    }   
+    }
 }
 
+
 parse_command_line();
-die $usage unless (defined($meta) && defined($EMT_kml));
+die $usage unless (defined($meta) && ($meta ne "") && defined($EMT_kml) && ($EMT_kml ne ""));
 
 # extracts the style definition from a session kml produced by EMT app
 # we want to reuse the style in our new KML file
@@ -403,14 +405,17 @@ sub get_style{
 
 
 # generate KML from the meta.csv file after manual id
-my $cmd = sprintf("ogr2ogr -f KML meta_raw.kml %s -a_srs \'EPSG:4326\' 
--oo X_POSSIBLE_NAMES=LON\* -oo Y_POSSIBLE_NAMES=LAT\* -oo KEEP_GEOM_COLUMNS=NO 
--where  \"\\\"MANUAL ID\\\" LIKE \'%%%s%%\'\" ", $meta, $species);
+my $cmd;
+if(defined $species and $species ne ""){
+    $cmd = sprintf("ogr2ogr -f KML meta_raw.kml %s -a_srs \'EPSG:4326\' -oo X_POSSIBLE_NAMES=LON\* -oo Y_POSSIBLE_NAMES=LAT\* -oo KEEP_GEOM_COLUMNS=NO -where  \"\\\"MANUAL ID\\\" LIKE \'%%%s%%\'\" ", $meta, $species);
+}else{
+    $cmd = sprintf("ogr2ogr -f KML meta_raw.kml %s -a_srs \'EPSG:4326\' -oo X_POSSIBLE_NAMES=LON\* -oo Y_POSSIBLE_NAMES=LAT\* -oo KEEP_GEOM_COLUMNS=NO", $meta);
+}
 system($cmd) == 0 or die $?;
 
 
 # open the KML to which the style should be added
-open (my $metaKML, "meta_raw.kml") or die $?;
+open (my $metaKML, "meta_raw.kml") or die $!;
 my ($manual_id, $date, $time);
 
 # add required style info
@@ -424,7 +429,7 @@ while(<$metaKML>){
         #       print "\n";
     }
     # add marker style XML tag to each Placemark
-    elsif(/MANUAL ID/ and /SimpleData/){
+    elsif(/"MANUAL ID"/ and /SimpleData/){
         ($manual_id) = $_ =~ />(.*)</;
     }elsif(/"DATE">/ and /SimpleData/){
         ($date) = $_ =~ />(.*)</;
@@ -437,216 +442,37 @@ while(<$metaKML>){
 }
 
 # clean up
-system("rm -f meta_raw.kml") == 0 or die $!;
+system("rm -f meta_raw.kml") == 0 or die $?;
 \end{lstlisting}
 
 %
 %
-%
-\section{Bat id}
-%
+\subsubsection{Postprocessing script}
 %
 %
-What does the bat id do if there are calls of more than one species in the recording?
 
+The above commands and programmes are wrapped up in a script called \texttt{postprocessing\_meta.sh}.
+It should be run from within the output directory of \textsf{K} batch processing after manual review of auto id's, filling the MANUAL ID column in \texttt{meta.csv} and optionally the ID NOTES column in \texttt{id\_notes.csv}. The script takes the following arguments:
+\begin{itemize}
+\item a KML file from the EMT app (you can find one in the input directory of \textsf{K} batch processing)
+\item a species code to create a KML for a certain species only (optional)
+\end{itemize}
 
-%
-%
-%
-\section{Recordings from other detectors}
-%
-%
-%
-Can K handle recordings from other bat detectors, like Batlogger?
-
-
-%
-%
-%
-\section{Miscellaneous}
-%
-%
-%
-I have run K with \texttt{Auto ID for Bats} set to \texttt{balanced (neutral)}. The input recordings came from EMT that had already done an auto id on them but with the \texttt{more accurate (conservative)} setting. In the \texttt{id.csv} file the bat id from the EMT app seems to have been copied to the \texttt{Manual ID} column. Twenty-four out of 179 ID's have changed in this process (about one in 7 id's). The auto id in K has changed id's of 9 recordings from a species to \texttt{NoID}, which is strange, since the auto id in K should have been less conservative, i.e. more willing to assign an id. In the other direction K has changed the id of 8 recordings from \texttt{NoID} to a species, i.e. what I would expect to happen occasionally. K has given the new id \texttt{Noise}, which does not occur among the EMT app id's, to 7 recordings. 
-
-The file log.txt indicates that there has been an error reading 4 of the input files. I have tried to open these files with Kaleidoscope individually, but got an error again. I have also tried to find these files in the EMT app on my smartphone, but couldn't find them. I could also not open them with the
-program Audacity, while I could open another file with it.
-
-%
-%
-%
-\section{Feature Request}
-%
-%
-%
-When working on a small screen (laptop) it would be nice to have the Viewer window, the Results window (table) and the Settings window overlap each other or in full screen size. Then switching between those windows is currently cumbersome (on Mac: F10, then select the window to switch to, Enter). It would be better to have a shortcut for each window, like \texttt{Cmd-1} for the Viewer, \texttt{Cmd-2} for the Results and \texttt{Cmd-3} for the Settings window, for instance.
+Specifically, the script does the following:
+\begin{enumerate}
+\item make a backup of \texttt{meta.csv} after manual review before post-processing (your work won't get lost!)
+\item check that files \texttt{meta.csv} and \texttt{id\_notes.csv} exist
+\item remove double quotes and separates multi-species entries in MANUAL ID column by a semicolon instead of comma
+\item check if all fields in MANUAL ID column of \texttt{meta.csv} are filled
+\item remove carriage returns in \texttt{meta.csv} (created by \textsf{K})
+\item add system UID into the column REVIEW USERID of \texttt{meta.csv}
+\item add the current date in a new column MANUAL ID DATE of \texttt{meta.csv}
+\item join ID NOTES column of \texttt{id\_notes.csv} to \texttt{meta.csv}
+\item discard some useless columns from \texttt{meta.csv}
+\item create a \texttt{meta.kml} file from \texttt{meta.csv} allowing for specification of a \textsf{K} species code to create a KML file for one species only
+\end{enumerate}
 
 
 
-% 
-%\begin{enumerate}
-%\item Implement a new random genetic marker technique called \textit{sRAD}.
-%\item Find loci linked to Dobzhansky-Muller incompatibilities responsible for  sterility in F$_{1}$ male hybrids of two grasshopper subspecies.
-%\end{enumerate}
-%
-%\begin{itemize}
-%\item How many genes are responsible for the observed hybrid male sterility? 
-%\item Are these genes disproportionately located on the X-chromosome?
-%\end{itemize}
-%
-%
-%\subsubsection{Background}
-%Two subspecies of \emph{Chorthippus parallelus} -- \emph{Chorthippus parallelus parallelus} and \emph{C. p. erythropus} -- form a hybrid zone in the Pyrenees. F$_{1}$ male hybrids between \emph{C. p. parallelus} and \emph{C. p. erythropus} from outside the hybrid zone are almost completely sterile with degenerate testes and a severely disrupted meiosis \citep{Hewitt1987}
-%$\sim$1800 RAD tags 
-% \textsterling1,100.
-%(see section \ref{QTL cross} on p. \pageref{QTL cross}),
-%\citep[p. 284-319]{CoyneOrr2004}, such as: 
-%
-%
-%\begin{figure*}[htb]%a picture has to be inserted into a figure environment in order to make it floatable; a star at figure has to be added for a two column layout
-%\begin{center}
-%\subfigure[Oscillogramm (bottom) and traces of the corresponding hindleg movements (top) of a singing \emph{C. montanus} male. Three syllables are shown. (from \citealp{Helversen1994}, p. 271) ]{\label{montanus}\includegraphics[scale=1.0]{montanus}}
-%\hfill %pushes the graphics to the left and right margins
-%\subfigure[Syllable duration over body temperature in \emph{C. parallelus} (syn. \emph{longicornis}) and \emph{C. montanus} males. (from \citealp{Helversen1987}, p. 121)]{\label{syllable}\includegraphics[scale=1.2]{syllableDuration}}
-%\end{center}
-%\caption{The songs of \emph{C. montanus} and \emph{C. parallelus} differ only in the duration of their syllables.}
-%\label{songdiff}%the label command has to occur after the caption but inside the figure environment to refer (with \ref) to the figure and not the section of the document
-%\end{figure*}
-%
-%
-%
-%%%% sRAD sketch from Floragenex website
-%\begin{figure*}[tbp]
-%\begin{center}
-%\includegraphics[scale=.25]{RADprocessOverview}
-%\caption{\emph{sRAD} is basically Solexa/illumina sequencing of restriction fragment ends. Each restriction site defines the position of two tightly linked RAD tags.} 
-%\label{Floragenex}
-%\end{center}
-%\end{figure*}
-%%%%
-%
-%\underline{s}equenced \underline{R}estriction \underline{S}ite associated \underline{D}NA.
-%
-%50\% NERC funding 
-%
-%
-%
-%
-%
-%%%% my own sketch of the sRAD library preparation process
-%\begin{figure*}[htbp]
-%\begin{center}
-%\includegraphics[scale=.6]{sRADprocessSketch}
-%\caption{(a) The genome is cut but a restriction endonuclease ~~(b) P1 adapters (blue) containing a different 5base pair long nucleotide sequence (red) for each individual sample are ligated to restriction fragment ends. ~~(c) After pooling the P1 ligated samples, they are sheared to below 1kb before a size range is selected on the gel. The shearing step makes the marker technique repeatable. ~~(d) A few steps further, the P2 adapter, a divergent Y adapter, is ligated onto all fragments. In the following PCR, only fragments with at least one P1 adapter will be amplified. ~~(e) Further complexity reduction by restricting the library with frequent cutter restriction enzymes. ~~(f) Solexa sequencing. The first 5 base pairs in the reads identify the individual. A T/A single nucleotide polymorphism is marked by the red frames.} 
-%\label{sRADsketch}
-%\end{center}
-%\end{figure*}
-%%%%
-%
-%
-%\begin{quotation}
-%``\ldots the most important determinant of [QTL analysis] power is F2 and/or backcross sample size \ldots  small samples sizes lead to systematic overestimation of QTL addititive effects, the so-called \textsc{beavis} effect \ldots simulations suggest that this effect becomes small as experimental sample sizes near $\sim$500 genotyped and phenotyped individuals.'' \citep{Orr2001a} 
-%\end{quotation}
-%
-%The temperature curve in the CT room where the grasshoppers have been recorded is oscillating by 2$^{\circ}$C 
-%
-%
-%
-%%%%%%%% PCA table
-%% Requires the booktabs package if the memoir class is not being used
-%\begin{table}[!htbp]
-%\begin{center}
-%\topcaption{correlation of peaks with PCA scores} % requires the 'topcapt' package
-%\begin{tabular}{@{}lcr@{}}
-%\toprule
-%& \multicolumn{2}{c}{scaling by:}\\
-%& Peak & Individual\\
-%\cmidrule(l){2-3} % Partial rule. (r) trims the line a little bit on the right; (l) & (lr) also possible
-%& Comp.1 & Comp.1\\
-%\midrule
-%Peak.1  & -0.8809&-0.8237\\
-%Peak.2  & -0.8249&-0.8490\\
-%Peak.3  & -0.7623&-0.8563\\
-%Peak.4  & -0.8255&-0.6677\\
-%Peak.5 & -0.8886&-0.5243\\
-%Peak.6  &-0.4218&0.3017\\
-%Peak.7  &-0.8427&0.1139\\
-%Peak.8  &-0.6538&0.4732\\
-%Peak.9  &-0.9358&0.3918\\
-%Peak.10&-0.7138&-0.3078\\
-%Peak.11 &-0.7750&0.1455\\
-%Peak.12& -0.8784&-0.4255\\
-%Peak.13 &-0.8469&0.1801\\
-%Peak.14 &-0.8413&0.5327\\
-%Peak.15 &-0.8619&0.5204\\
-%Peak.16 &-0.8038&0.4222\\
-%Peak.17 &-0.8171&0.2868\\
-%Peak.18 &-0.8320&0.4565\\
-%Peak.19 &-0.8707&0.6411\\
-%Peak.20 &-0.8834&0.6679\\
-%Peak.21 &-0.8377&0.6844\\
-%Peak.22& -0.8207&0.6334\\
-%Peak.23 &-0.7635&0.5860\\
-%\bottomrule
-%\end{tabular}
-%\label{PCcorrPeak}
-%\end{center}
-%\end{table}
-%%%%%%% PCA table
-%
-%
-%
-%\begin{table*} % the asterisk puts the table on that page, I don't know why, but here it fits better
-%\centering
-%\topcaption{MANOVA results for species difference of CHC blends among females using data scaled by peak.} % the top caption needs to be before the begin{tabular} command
-%\begin{tabular}{@{}lrrrrrr@{}}
-%\toprule
-%& \small{Df} & \small{Pillai} & \small{approx F} & \small{num Df} & \small{den Df} & {Pr($>$F)}\\  
-%\midrule  
-%\small{Species} & \small{1} & \small{0.817}  &   \small{6.19}    & \small{23}    & \small{32} & \small{1.9e-06***}\\
-%\small{Residuals}  &   \small{54} & & & & & \\                                       
-%\bottomrule
-%\end{tabular}
-%\label{manova}
-%\end{table*}
-%
-%
-%
-%%%%% multivariate outlier individuals
-%\begin{table}[!htbp]
-%\centering
-%\topcaption{Multivariate outlier individuals.} % requires the 'topcapt' package
-%\begin{tabular}{@{}lr@{}}
-%\toprule
-%Individual & $\sqrt[2]{Mahanalobis}$\\
-%\midrule
-%26parF & 7.066\\
-%49parF & 7.025\\
-%50parF & 5.999\\
-%52parF & 7.186\\
-%53parF & 5.976\\
-%55parF & 6.740\\
-%85parF & 6.819\\
-%29monF\underline{}Fin & 6.349\\
-%32monF\underline{}Fin & 6.059\\
-%84monF\underline{}Fin & 6.871\\
-%61monF\underline{}Ger & 5.938\\
-%\bottomrule
-%\end{tabular}
-%\label{outlier}
-%\end{table}
-%
-%
-%
-%\bibliographystyle{apalike}
-%\onecolumn
-%\setlength{\columnsep}{20pt}
-%\begin{multicols}{2} 
-%% the separation of the columns has been set in the preambel
-%%\begin{multicols}{2}
-%
-%\bibliography{/Users/Claudius/Documents/MyLiterature/Literature}
-%
-%\end{multicols}
-%
+
 \end{document}
