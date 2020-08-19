@@ -440,8 +440,8 @@ system($cmd) == 0 or die $?;
 
 
 # open the KML to which the style should be added
-open (my $metaKML, "meta_raw.kml") or die $!;
-my ($manual_id, $date, $time);
+open (my $metaKML, "meta_raw.kml") or die $!; 
+my ($manual_id, $date, $time, @manual_IDs);
 
 # add required style info
 # use MANUAL ID for marker style (the Session KML uses AUTO ID)
@@ -452,18 +452,17 @@ while(<$metaKML>){
     if(/<Document.*>/){
         print get_style();
         #       print "\n";
-    }
+    }   
     # add marker style XML tag to each Placemark
     elsif(/"MANUAL ID"/ and /SimpleData/){
         ($manual_id) = $_ =~ />(.*)</;
-    }elsif(/"DATE">/ and /SimpleData/){
-        ($date) = $_ =~ />(.*)</;
-    }elsif(/"TIME">/ and /SimpleData/){
-        ($time) = $_ =~ />(.*)</;
     }elsif(/<\/ExtendedData>/){
-        print "\t<styleUrl>#MarkerStyle", $manual_id, "</styleUrl>\n";
-        print "\t<name>", $date, ", ", $time, "</name>\n";
-    }
+        @manual_IDs = split(/;/, $manual_id);
+        # MarkerStyle for first species
+        print "\t<styleUrl>#MarkerStyle", $manual_IDs[0], "</styleUrl>\n"; 
+        # put manual ids in name tag
+        print "\t<name>", join(', ', @manual_IDs), "</name>\n"; 
+    }   
 }
 
 # clean up
