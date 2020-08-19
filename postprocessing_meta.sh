@@ -10,16 +10,16 @@ then
 	echo "Usage: postprocessing_meta.sh <KML file> [<species code>]"
 	echo
 	echo "If run from the output directory of Kaleidoscope batch processing it will:"
-	echo -e "\tcheck that files meta.csv and id_notes.csv exist"
+	echo -e "\t+ check that files meta.csv and id_notes.csv exist"
 	echo -e "\t+ make a backup of meta.csv before postprocessing"
-	echo -e "\t+ remove double quotes and carriage returns within meta.csv if they exist"
+	echo -e "\t+ remove double quotes and carriage returns within meta.csv if they exist, separating multi-species entries by a semicolon"
 	echo -e "\t+ add system UID into the column REVIEW USERID of meta.csv"
-	echo -e "\t+ join ID NOTES column of id_notes.csv to meta.csv"
+	echo -e "\t+ join ID NOTES column of id_notes.csv to meta.csv after replacing commas in notes with semicolons"
 	echo -e "\t+ discard some useless columns from meta.csv"
 	echo -e "\t+ create a meta.kml from meta.csv allowing for specification of a K species code to create species-specific KML files"
 	echo
+	exit 0
 fi
-exit 0
 
 # check that files exist
 if [ ! -e meta.csv ]
@@ -47,10 +47,10 @@ echo "I am making a backup of your work in meta_after_review.csv before continui
 cp meta.csv meta_after_review.csv
 
 # remove double quotes if they exist
-if grep "\"" meta.csv; 
+if grep "\"" meta.csv > /dev/null 
 	then 
-		# if two species codes have been given to a recording, but separated by a comma
-		if grep -E '"[^"]+,[^"]+"' meta.csv
+		# if two or more species codes have been given to a recording, but separated by a comma
+		if grep -E '"[^"]+,[^"]+"' meta.csv > /dev/null
 		then
 			echo "Separating multi-species entries by a semicolon..."
 			perl -F/\",\"/  -i -lane'map {tr/,/;/} @F; print join(",", @F)' meta.csv
@@ -103,6 +103,19 @@ COLNUM=$(head -n 1 id_notes.csv | tr ',' '\n' | wc -l)
 if [ $COLNUM -eq 7 ]
 then
 	echo "Joining notes column from id_notes.csv to meta.csv."
+	# if notes in ID NOTES column contain commas
+	if grep -E '"[^"]+(,[^"]+)+"' id_notes.csv > /dev/null
+	then
+		echo "Replacing commas with semicolons in ID NOTES column..."
+		perl -i -pe'next if not /"$/; ($pre_note, $note) = $_ =~ /(.*,)(".*"$)/; $note =~ tr/,/;/; $_ = $pre_note . $note . "\n";' id_notes.csv
+	fi
+	# remove double quotes
+	if grep "\"" id_notes.csv > /dev/null
+	then
+		echo "id_notes.csv contains double quotes. Removing them ..." 
+		tr -d '"' < id_notes.csv > id_notes_withoutQuotes.csv
+		mv id_notes_withoutQuotes.csv id_notes.csv
+	fi
 	join -t, -1 3 -2 1  meta.csv <(cut -d, -f1,7 id_notes.csv) > meta_with_id_notes.csv
 	if [ $? -eq 0 ]
 	then

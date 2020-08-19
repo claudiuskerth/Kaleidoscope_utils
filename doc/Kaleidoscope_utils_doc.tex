@@ -352,6 +352,14 @@ join -t, -1 3 -2 1  meta.csv <(cut -d, -f1,7 id_notes.csv)
 > meta_with_id_notes.csv
 \end{lstlisting}
 
+The upper command requires that \texttt{id\_notes.csv} is comma-separated and that die id notes made in the spreadsheet contain no commas. The following command line makes sure that the ID NOTES column, which must be the last column of the file, has semicolons instead of commas if they exist:
+
+\begin{lstlisting}[numbers=none]
+perl -i -pe'next if not /"$/; ($pre_note, $note) = $_ =~ /(.*,)(".*"$)/; 
+$note =~ tr/,/;/; $_ = $pre_note . $note . "\n";' id_notes.csv
+\end{lstlisting}
+
+This command should be run before the \textsf{join} command.
 
 %
 %
@@ -447,7 +455,7 @@ system("rm -f meta_raw.kml") == 0 or die $?;
 
 %
 %
-\subsubsection{Postprocessing script}
+\subsection{Postprocessing script}
 %
 %
 
