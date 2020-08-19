@@ -26,6 +26,7 @@ rulecolor = \color{lightgray},
 breaklines = true,
 firstnumber = 1,
 numbers = left,
+numbers = none,
 language = Bash,
 basicstyle = \ttfamily\small,
 showstringspaces = false
@@ -341,6 +342,22 @@ Specifically the script does the following:
 
 %
 %
+\subsection{How to remove lines for noise recordings from \texttt{meta.csv}}
+%
+%
+
+The following command line removes lines from \texttt{meta.csv} that contain the word "noise" (upper or lower case) in the column MANUAL ID:
+
+\begin{lstlisting}
+perl -F, -i'.withNoise' -lane'if($.==1)
+{print; for($i=0;$i<@F;$i++){if($F[$i] =~ /^MANUAL ID$/){$Spalte=$i}}}
+else{print if not $F[$Spalte] =~ /noise/i}' meta.csv
+\end{lstlisting}
+
+The command also makes a backup of the \texttt{meta.csv} with lines for noise recordings.
+
+%
+%
 \subsection{How to join ID NOTES to \texttt{meta.csv}}
 %
 %
@@ -352,7 +369,7 @@ join -t, -1 3 -2 1  meta.csv <(cut -d, -f1,7 id_notes.csv)
 > meta_with_id_notes.csv
 \end{lstlisting}
 
-The upper command requires that \texttt{id\_notes.csv} is comma-separated and that die id notes made in the spreadsheet contain no commas. The following command line makes sure that the ID NOTES column, which must be the last column of the file, has semicolons instead of commas if they exist:
+The upper command requires that \texttt{id\_notes.csv} is comma-separated and that the id notes made in the spreadsheet contain no commas. The following command line makes sure that the ID NOTES column, which must be the last column of the file, has semicolons instead of commas if they exist:
 
 \begin{lstlisting}[numbers=none]
 perl -i -pe'next if not /"$/; ($pre_note, $note) = $_ =~ /(.*,)(".*"$)/; 
@@ -475,8 +492,10 @@ Specifically, the script does the following:
 \item remove carriage returns in \texttt{meta.csv} (created by \textsf{K})
 \item add system UID into the column REVIEW USERID of \texttt{meta.csv}
 \item add the current date in a new column MANUAL ID DATE of \texttt{meta.csv}
+\item replaces commas with semicolons in ID NOTES column of \texttt{id\_notes.csv}
 \item join ID NOTES column of \texttt{id\_notes.csv} to \texttt{meta.csv}
 \item discard some useless columns from \texttt{meta.csv}
+\item discards line with manual id "noise"
 \item create a \texttt{meta.kml} file from \texttt{meta.csv} allowing for specification of a \textsf{K} species code to create a KML file for one species only
 \end{enumerate}
 

@@ -135,6 +135,8 @@ cp meta.csv atem.vsc
 cut -d, -f1,5-6,11-13,15,17-18,24,26,28,30- meta.csv > atem.vsc
 mv atem.vsc meta.csv
 
+# remove noise recordings
+perl -F, -i'.withNoise' -lane'if($.==1){print; for($i=0;$i<@F;$i++){if($F[$i] =~ /^MANUAL ID$/){$palte=$i}}}else{print if not $F[$palte] =~ /noise/i}' meta.csv
 # create KML file from meta.csv allowing to specify a species
 if [ "$1" == "" ]
 then
