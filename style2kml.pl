@@ -97,7 +97,7 @@ if(defined $species and $species ne ""){
 }else{
 	$cmd = sprintf("ogr2ogr -f KML meta_raw.kml %s -a_srs \'EPSG:4326\' -oo X_POSSIBLE_NAMES=LON\* -oo Y_POSSIBLE_NAMES=LAT\* -oo KEEP_GEOM_COLUMNS=NO", $meta);
 }
-system($cmd) == 0 or die $?;
+system($cmd) == 0 or die $!;
 
 
 # open the KML to which the style should be added
@@ -106,7 +106,6 @@ my ($manual_id, $date, $time, @manual_IDs);
 
 # add required style info
 # use MANUAL ID for marker style (the Session KML uses AUTO ID)
-# add date and time in name tag (for chronological sorting in Google Earth)
 while(<$metaKML>){
 	print;
 	# add the style definition after the Document XML tag

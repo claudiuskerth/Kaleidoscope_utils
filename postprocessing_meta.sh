@@ -39,6 +39,13 @@ then
 	echo "You need to specifiy a kml file from the EMT app."
 	echo "Optionally you can specify a species code from Kaleidoscope to create a one-species-only kml file."
 	echo "You cannot give more than two command line arguments."
+	exit 1
+fi
+
+if [ -e meta_after_review.csv ]
+then
+	echo "You seem to have run postprocessing already. Restoring original meta.csv."
+	cp meta_after_review.csv meta.csv
 fi
 
 
@@ -136,6 +143,7 @@ cut -d, -f1,5-6,11-13,15,17-18,24,26,28,30- meta.csv > atem.vsc
 mv atem.vsc meta.csv
 
 # remove noise recordings
+echo "Removing lines for noise recordings from meta.csv."
 perl -F, -i'.withNoise' -lane'if($.==1){print; for($i=0;$i<@F;$i++){if($F[$i] =~ /^MANUAL ID$/){$palte=$i}}}else{print if not $F[$palte] =~ /noise/i}' meta.csv
 # create KML file from meta.csv allowing to specify a species
 if [ "$1" == "" ]
