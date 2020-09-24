@@ -2,6 +2,8 @@ PRE-PROCESSING:
 
 	[-] add creation of meta_NR.kml to preprocessing script
 
+	[-] hardcode kml style from Wildlife Acoustics in style2kml.pl, makes it easier to use, also for data from Batlogger
+
 
 POST-PROCESSING:
 

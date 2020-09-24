@@ -85,5 +85,9 @@ if [ -e NOISE ]
 fi
 
 # create id_notes.csv for note taking in spreadsheet app
-echo "creating file id_notes.csv for note taking ..."
+echo "Creating file id_notes.csv for note taking ..."
 cut -d, -f3,5-6,18,24,30 meta.csv > id_notes.csv
+
+# creating meta_NR.kml
+echo "Creating meta_NR.kml ..."
+style2kml.pl --meta meta.csv --NR > meta_NR.kml
