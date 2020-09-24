@@ -1,0 +1,36 @@
+PRE-PROCESSING:
+
+	[-] add creation of meta_NR.kml to preprocessing script
+
+
+POST-PROCESSING:
+
+	[+] Are multi-species labels in MANUAL ID properly filtered by style2kml.pl with --species switch?
+
+	[+] Fix "Replace comma with semicolon in ID NOTES".
+
+	[+] What happens if style2kml.pl gets a species code that it cannot find in meta.csv?
+		# it outputs no Placemarks, as it should be
+
+	[+] Remove noise files from output.
+
+	[+] marker style in KML when multi-species MANUAL ID?
+
+	[+] 1) create a meta.csv that contains an INDIR column with paths to the directory with audio files, suitable for database upload
+
+	[+] 2) create a zip file with meta.csv, meta.kml and the audio recordings that meta.csv points to
+
+	[+] add feature 1) to postprocessing script
+
+	[-] use NR in name tag of KML file, this serves as an ID, so that the geolocation of a sound file can quickly be found in Google Earth;
+	    however, having the Manual IDs in the name tag can also be useful: they allow a browsing of which species was found where;
+	    it may therefore be best to create two KML files: one with MANUAL IDs in the name tag and one with the NR id in the name tag;
+	    they could be called meta_MANUALIDs.kml and meta_NR.kml; meta_NR.kml should be created by the preprocessing script in order to have 
+	    it for manual id
+
+	[-] add feature 2) as a new utility script; it may be nice to separate this from postprocessing,
+	    allowing to create a zip archive from files in the output directory at any time
+
+	[-] write usage for the set of tools
+
+	[-] create postgresql database for the meta data

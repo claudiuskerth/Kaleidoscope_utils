@@ -2,7 +2,7 @@
 
 echo
 echo "This is a post-processing script for meta.csv, a file created by Kaleidoscope batch processing."
-echo "This script should be run after manual id of recordings."
+echo "This script should be run after manual id of recordings from within the output directory."
 echo
 
 if [[ $1 == -h* ]]
@@ -36,6 +36,8 @@ fi
 
 if (( ! $# > 0 )) && (( ! $# < 3 ))
 then
+	echo "Usage: postprocessing_meta.sh <KML file> [<species code>]"
+	echo
 	echo "You need to specifiy a kml file from the EMT app."
 	echo "Optionally you can specify a species code from Kaleidoscope to create a one-species-only kml file."
 	echo "You cannot give more than two command line arguments."
@@ -51,6 +53,7 @@ fi
 
 # make backup of manual id work
 echo "I am making a backup of your work in meta_after_review.csv before continuing with post-processing meta.csv."
+echo "Do note [re]move meta_after_review.csv!"
 cp meta.csv meta_after_review.csv
 
 # remove double quotes if they exist
@@ -145,6 +148,16 @@ mv atem.vsc meta.csv
 # remove noise recordings
 echo "Removing lines for noise recordings from meta.csv."
 perl -F, -i'.withNoise' -lane'if($.==1){print; for($i=0;$i<@F;$i++){if($F[$i] =~ /^MANUAL ID$/){$palte=$i}}}else{print if not $F[$palte] =~ /noise/i}' meta.csv
+
+# create meta_withINDIR
+echo "Creating  meta_withINDIR.csv  : a version of meta.csv that contains the path to the audio files."
+echo "It is therefore suitable for upload to a database."
+mv NOISE/* .
+rmdir NOISE
+rename 's/_000//' *wav
+META_NR=$( echo $(( $(wc -l meta.csv | awk '{print $1}') -1 )) )
+paste -d, <(echo "INDIR"; for i in $(seq $META_NR); do pwd; done) meta.csv > meta_withINDIR.csv
+
 # create KML file from meta.csv allowing to specify a species
 if [ "$1" == "" ]
 then

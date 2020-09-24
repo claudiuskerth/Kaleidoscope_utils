@@ -78,7 +78,8 @@ colorlinks=true,%
 %
 \title{ Documentation for \textsf{Kaleidoscope Utils}  \\
 \vspace{20pt}
-\normalsize{using \textsf{Kaleidoscope} for bat call identification and analysis, free version 5.1.9g}\vspace{100pt}}
+\normalsize{using \textsf{Kaleidoscope} for bat call identification and analysis, free version 5.1.9g}\vspace{100pt}
+}
 
 %
 %
@@ -195,6 +196,7 @@ With the free version of Kaleidoscope, noise detection only works by copying fil
 %
 %
 \subsubsection{How to add the noise label to \texttt{meta.csv}}
+\label{section:noise-detection}
 %
 %
 %
@@ -380,10 +382,35 @@ This command should be run before the \textsf{join} command.
 
 %
 %
+\subsection{How to create a \texttt{meta.csv} for database upload}
+%
+%
+The resulting \texttt{meta.csv} file can be opened by \textsf{K}, if the input directory in the Control Panel of \textsf{K} is still set to the input directory of \textsf{K} batch processing (e.g. the \texttt{Session\_20200902\_194538} directory). If \texttt{meta.csv} also contains a column \textsc{INDIR} with the path to the audio files, then \textsf{K} can find the audio files (if they exist) no matter how the paths are set in the Control Panel.
+
+%A version of \texttt{meta.csv} that points to the original Session folder can be created with the following command:
+
+%\begin{lstlisting}
+%paste -d, <(cut -d, -f1 meta_after_review.csv | tr -d '"') meta.csv | awk -F, 'NF>2' > meta_withINDIR.csv
+%\end{lstlisting}
+
+A version of \texttt{meta.csv} that points to the audio files in the \emph{output} directory of \textsf{K} batch processing can be created with the following set of commands (assuming the current working directory is still the output directory):
+
+\begin{lstlisting}[numbers=left]
+mv NOISE/* .
+rmdir NOISE
+rename 's/_000//' *wav
+META_NR=$( echo $(( $(wc -l meta.csv | awk '{print $1}') -1 )) )
+paste -d, <(echo "INDIR"; for i in $(seq $META_NR); do pwd; done) meta.csv > meta_withINDIR.csv
+\end{lstlisting}
+
+\texttt{meta\_withINDIR.csv} would be suitable for upload to a database.
+Keeping two copies of the audio recording files is a waste of storage.  The audio files in the input directory could now be deleted without loss of information.
+ 
+%
+%
 \subsection{How to create a KML file from the \texttt{meta.csv} file after manual id}
 %
 %
-
 The EMT app creates a KML file for each recording session. It would be nice to create an updated KML file after manual review of the recordings. This is what the programme \texttt{style2kml.pl} does. It takes a \texttt{meta.csv} (usually after reviewing the recordings and filling the MANUAL ID column) as well as a(ny) Session*kml file created by the EMT app and creates a KML that contains Placemarks that show the manual id (not the auto id from the EMT app) and the remaining info in \texttt{meta.csv} in a pop-up table in Google Earth. Note, that the programme relies on the \texttt{ogr2ogr} utility from \href{https://gdal.org/download.html}{GDAL}.
 
 \begin{lstlisting}[language=Perl, backgroundcolor = \color{OliveGreen}, basicstyle=\small\ttfamily\color{white}, keywordstyle=\color{YellowOrange}\bfseries,
@@ -486,17 +513,81 @@ Specifically, the script does the following:
 \begin{enumerate}
 \item make a backup of \texttt{meta.csv} after manual review before post-processing (your work won't get lost!)
 \item check that files \texttt{meta.csv} and \texttt{id\_notes.csv} exist
-\item remove double quotes and separates multi-species entries in MANUAL ID column by a semicolon instead of comma
+\item remove double quotes and separate multi-species entries in MANUAL ID column by a semicolon instead of comma
 \item check if all fields in MANUAL ID column of \texttt{meta.csv} are filled
 \item remove carriage returns in \texttt{meta.csv} (created by \textsf{K})
 \item add system UID into the column REVIEW USERID of \texttt{meta.csv}
 \item add the current date in a new column MANUAL ID DATE of \texttt{meta.csv}
-\item replaces commas with semicolons in ID NOTES column of \texttt{id\_notes.csv}
+\item replace commas with semicolons in ID NOTES column of \texttt{id\_notes.csv}
 \item join ID NOTES column of \texttt{id\_notes.csv} to \texttt{meta.csv}
 \item discard some useless columns from \texttt{meta.csv}
 \item discards line with manual id "noise"
+\item creates a version of \texttt{meta.csv} that contains a column with the path to the output directory. This file would be suitable for upload to a database.
 \item create a \texttt{meta.kml} file from \texttt{meta.csv} allowing for specification of a \textsf{K} species code to create a KML file for one species only
 \end{enumerate}
+
+
+%
+%
+\subsection{Creating a zip archive of a recording session for colleagues}
+%
+%
+It would also be nice to create a zip file with \texttt{meta.csv}, \texttt{meta.kml} and the corresponding audio files that can be sent to and opened by colleagues with \textsf{K}. We do not want to send junk files containing only noise. Noise files are not listed in the final \texttt{meta.csv} after post-processing. First we need to create a list of audio files to include in the zip archive from \texttt{meta.csv}:
+
+% cut -d, -f1-2 meta_withINDIR.csv | tr ',' '/' | tail -n +2 > include.lst
+\begin{lstlisting}
+cut -d, -f1 meta.csv | tail -n +2 | tr -d '"' | sed -E 's/(.*)/*\1/' > include.lst
+\end{lstlisting}
+
+Note, that the postprocessed \texttt{meta.csv} contains no quotation marks ("), but if you have opened that file with \textsf{K} after postprocessing and then saved it, \textsf{K} will generally have inserted quotation marks again. Hence, the upper command makes sure that they are removed again, if they exist.
+
+Then we can create a zip archive called, for example, \emph{MyRecordings} containing the chosen files:
+
+\begin{lstlisting}
+zip -r MyRecordings . -i@include.lst -i meta.csv meta.kml
+\end{lstlisting}
+
+After sending this zip archive to your colleague, she could then unzip this archive with the following command to the output directory \emph{MyRecordings}:
+
+\begin{lstlisting}
+unzip MyRecordings.zip -d MyRecordings
+\end{lstlisting}
+
+\ldots and open \texttt{meta.csv} with \textsf{K} after setting the input directory in \textsf{K}'s Control Panel to \emph{MyRecordings}. Note, that without setting the correct input directory, \textsf{K} will not be able to find the audo files listed in \texttt{meta.csv}.
+
+% zip -vv -j Recordings_20200909_Claudius /Volumes/ADATA_SD700/EchoMeterTouchRecordings/Session_20200909_193427/* -i@include.lst.small
+% zip -r Reocrdings_20200909_Claudius.zip . --include meta.csv meta.kml
+
+% zip -r Recordings . -i@include.lst -i meta.csv meta.kml
+%\begin{lstlisting}
+%zip -j MyRecordings /path/to/Session_folder/* -i@include.lst
+%zip -r MyRecordings . --i meta.csv meta.kml
+%\end{lstlisting}
+%
+%The \texttt{/path/to/Session\_folder} is the full path to where the input files reside.
+%
+%The colleague could then unzip this archive with the following command to the output directory \emph{MyRecordings}:
+%
+%An alternative to the upper approach could be to first move all .wav file in the output NOISE folder one level up, then rename the .wav files (removing *\_000*) and then adding all files listed in \texttt{meta.csv} to the zip archive via an include list.
+%From the output directory of \textsf{K} batch processing:
+%
+%\begin{lstlisting}
+%mv NOISE/* .
+%rename 's/_000//' *wav
+%zip -r MyRecordings . -i@include.lst -i meta.csv meta.kml
+%\end{lstlisting}
+
+%
+%
+\section{Requirements}
+%
+%
+The utility scripts heavily depend on UNIX command line programmes. They will therefore only work on MacOS or a Linux-flavour.
+
+\begin{itemize}
+\item ogr2ogr
+\item Perl rename
+\end{itemize}
 
 
 
