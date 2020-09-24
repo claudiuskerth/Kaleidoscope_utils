@@ -7,7 +7,8 @@ echo
 
 if [[ $1 == -h* ]]
 then
-	echo "Usage: postprocessing_meta.sh <KML file> [<species code>]"
+	# echo "Usage: postprocessing_meta.sh <KML file> [<species code>]"
+	echo "Usage: postprocessing_meta.sh [<species code>]"
 	echo
 	echo "If run from the output directory of Kaleidoscope batch processing it will:"
 	echo -e "\t+ check that files meta.csv and id_notes.csv exist"
@@ -34,13 +35,16 @@ then
 	exit 1
 fi
 
-if (( ! $# > 0 )) && (( ! $# < 3 ))
+#if (( ! $# > 0 )) && (( ! $# < 3 ))
+if [[ ! $# < 2 ]]
 then
-	echo "Usage: postprocessing_meta.sh <KML file> [<species code>]"
+	# echo "Usage: postprocessing_meta.sh <KML file> [<species code>]"
+	echo "Usage: postprocessing_meta.sh [<species code>]"
 	echo
-	echo "You need to specifiy a kml file from the EMT app."
+#	echo "You need to specifiy a kml file from the EMT app."
 	echo "Optionally you can specify a species code from Kaleidoscope to create a one-species-only kml file."
-	echo "You cannot give more than two command line arguments."
+	#echo "You cannot give more than two command line arguments."
+	echo "You cannot give more than one command line argument."
 	exit 1
 fi
 
@@ -161,15 +165,11 @@ paste -d, <(echo "INDIR"; for i in $(seq $META_NR); do pwd; done) meta.csv > met
 # create KML file from meta.csv allowing to specify a species
 if [ "$1" == "" ]
 then
-	echo "Cannot create meta.kml file from meta.csv, since you haven't specified a EMT-app KML to take the style from."
-	exit 1
+	# style2kml.pl --meta meta.csv --EMT-kml $1 > meta.kml
+	style2kml.pl --meta meta.csv > meta_ManualID.kml
+	echo "Creating meta_ManualID.kml file from meta.csv."
 else
-	if [ "$2" == "" ]
-	then
-		style2kml.pl --meta meta.csv --EMT-kml $1 > meta.kml
-		echo "Creating meta.kml file from meta.csv."
-	else
-		style2kml.pl --meta meta.csv --EMT-kml $1 --species $2 > meta.kml
-		echo "Creating meta.kml file from meta.csv but only for species $2."
-	fi
+	style2kml.pl --meta meta.csv --species $1 > meta_$1.kml
+	printf "Creating meta_%s.kml file from meta.csv for species %s only.\n" $1 $1
+#	echo "Creating meta_$1.kml file from meta.csv but only for species $1."
 fi
