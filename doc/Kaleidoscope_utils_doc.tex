@@ -237,7 +237,7 @@ To assign multiple manual IDs, hold the Control key down while pressing one of t
 
 On a Mac press the \fbox{cmd} key instead of the \fbox{ctrl} key. The choice of a comma to separate species labels is unfortunate since \texttt{meta.csv} is comma separated. I would therefore recommend to edit multi-species labels so that they are separated by a semicolon.
 
-Usually, when you save \texttt{meta.csv} with \textsf{K} it will add double quotes around each field entry, which disrupts further command line manipulation of this important file. If you have multi-species labels that are separated by a comma the use the following command line to separate them by a semicolon:
+Usually, when you save \texttt{meta.csv} with \textsf{K} it will add double quotes around each field entry, which disrupts further command line manipulation of this important file. If you have multi-species labels that are separated by a comma then use the following command line to separate them by a semicolon:
 
 \begin{lstlisting}[numbers=none]
 perl -F/\",\"/  -i -lane 
@@ -529,7 +529,7 @@ Specifically, the script does the following:
 
 %
 %
-\subsection{Creating a zip archive of a recording session for colleagues}
+\subsection{How to create a zip archive of a recording session for colleagues}
 %
 %
 It would also be nice to create a zip file with \texttt{meta.csv}, \texttt{meta.kml} and the corresponding audio files that can be sent to and opened by colleagues with \textsf{K}. We do not want to send junk files containing only noise. Noise files are not listed in the final \texttt{meta.csv} after post-processing. First we need to create a list of audio files to include in the zip archive from \texttt{meta.csv}:
@@ -553,7 +553,7 @@ After sending this zip archive to your colleague, she could then unzip this arch
 unzip MyRecordings.zip -d MyRecordings
 \end{lstlisting}
 
-\ldots and open \texttt{meta.csv} with \textsf{K} after setting the input directory in \textsf{K}'s Control Panel to \emph{MyRecordings}. Note, that without setting the correct input directory, \textsf{K} will not be able to find the audo files listed in \texttt{meta.csv}.
+\ldots and open \texttt{meta.csv} with \textsf{K} after setting the input directory in \textsf{K}'s Control Panel to \emph{MyRecordings}. Note, that without setting the correct input directory, \textsf{K} will not be able to find the audio files listed in \texttt{meta.csv}.
 
 % zip -vv -j Recordings_20200909_Claudius /Volumes/ADATA_SD700/EchoMeterTouchRecordings/Session_20200909_193427/* -i@include.lst.small
 % zip -r Reocrdings_20200909_Claudius.zip . --include meta.csv meta.kml
@@ -582,12 +582,16 @@ unzip MyRecordings.zip -d MyRecordings
 \section{Requirements}
 %
 %
-The utility scripts heavily depend on UNIX command line programmes. They will therefore only work on MacOS or a Linux-flavour.
+The commands and utility scripts described here heavily depend on UNIX command line programmes. They will therefore only work on MacOS or a Linux-flavour.
 
 \begin{itemize}
-\item ogr2ogr
-\item Perl rename
+\item \texttt{ogr2ogr}
+\item Perl \texttt{rename}
 \end{itemize}
+
+
+
+
 
 
 

@@ -1,8 +1,8 @@
 PRE-PROCESSING:
 
-	[-] add creation of meta_NR.kml to preprocessing script
+	[+] add creation of meta_NR.kml to preprocessing script
 
-	[-] hardcode kml style from Wildlife Acoustics in style2kml.pl, makes it easier to use, also for data from Batlogger
+	[+] hardcode kml style from Wildlife Acoustics in style2kml.pl, makes it easier to use, also for data from Batlogger
 
 
 POST-PROCESSING:
@@ -24,13 +24,13 @@ POST-PROCESSING:
 
 	[+] add feature 1) to postprocessing script
 
-	[-] use NR in name tag of KML file, this serves as an ID, so that the geolocation of a sound file can quickly be found in Google Earth;
+	[+] use NR in name tag of KML file, this serves as an ID, so that the geolocation of a sound file can quickly be found in Google Earth;
 	    however, having the Manual IDs in the name tag can also be useful: they allow a browsing of which species was found where;
 	    it may therefore be best to create two KML files: one with MANUAL IDs in the name tag and one with the NR id in the name tag;
 	    they could be called meta_MANUALIDs.kml and meta_NR.kml; meta_NR.kml should be created by the preprocessing script in order to have 
 	    it for manual id
 
-	[-] add feature 2) as a new utility script; it may be nice to separate this from postprocessing,
+	[+] add feature 2) as a new utility script; it may be nice to separate this from postprocessing,
 	    allowing to create a zip archive from files in the output directory at any time
 
 	[-] write usage for the set of tools
