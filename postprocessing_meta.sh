@@ -88,6 +88,11 @@ fi
 tr -d '\r' < meta.csv > meta_noCR.csv
 mv -f meta_noCR.csv meta.csv
 
+# remove asterisks if they exist
+# the column names sometimes get asterisks from Kaleidoscope
+tr -d '*' < meta.csv > meta_noAst.csv
+mv -f meta_noAst.csv meta.csv
+
 # add system UID into column REVIEW USERID
 echo "Adding your system user id to the REVIEW USERID column of meta.csv: $USER"
 perl -F"," -lane 'BEGIN{chomp($user = `echo \$USER`);}if($.==1){print; for($i=0;$i<@F;$i++){if($F[$i] =~ /^REVIEW USERID$/){$Spalte=$i;}}}else{$F[$Spalte] = $user; print join(",", @F)}' meta.csv > meta_with_USERID.csv
@@ -130,10 +135,18 @@ then
 		tr -d '"' < id_notes.csv > id_notes_withoutQuotes.csv
 		mv id_notes_withoutQuotes.csv id_notes.csv
 	fi
-	join -t, -1 3 -2 1  meta.csv <(cut -d, -f1,7 id_notes.csv) > meta_with_id_notes.csv
+	NRCOLNUM=$(head -n 1 meta.csv | tr ',' '\n' | nl | grep "NR" | cut -f1)
+	INFILECOLNUM=$(head -n 1 meta.csv | tr ',' '\n' | nl | grep "IN FILE" | cut -f1)
+	join -t, -1 $INFILECOLNUM -2 1 <(sort -t, -nk $NRCOLNUM meta.csv) <(sort -t, -nk 6,6 id_notes.csv | cut -d, -f1,7) > meta_with_id_notes.csv
+#	# get header line line from bottom to top (after sorting)
+#	NUMLINES=$(wc -l meta.csv | awk '{print $1-1}')
+#	tail -1 meta_with_id_notes.csv | tee header.csv | cat - <(head -n $NUMLINES meta_with_id_notes.csv) > meta_with_id_notes_headerTop.csv
 	if [ $? -eq 0 ]
 	then
+		# echo $NUMLINES
 		mv -f meta_with_id_notes.csv meta.csv
+		rm -f header.csv
+		# mv -f meta_with_id_notes_headerTop.csv meta.csv
 	else
 		echo "Seem to have trouble joining id notes to meta. Quitting..."
 		exit 1
@@ -142,6 +155,7 @@ else
 	echo "Cannot join ID NOTES column. File id_notes.csv does not have seven columns."
 	exit 1
 fi
+
 
 # select columns from meta.csv
 echo "Selecting columns from meta.csv. Some can be dropped, really."
