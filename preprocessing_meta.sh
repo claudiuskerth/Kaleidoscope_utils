@@ -47,7 +47,7 @@ else
 fi
 
 # remove double quotes if they exist
-if grep "\"" meta_orig.csv; 
+if grep "\"" meta_orig.csv > /dev/null; 
 	then 
 		echo "meta.csv contains double quotes. Removing them ..." 
 		tr -d '"' < meta_orig.csv > meta.csv
@@ -57,9 +57,14 @@ fi
 tr -d '\r' < meta.csv > meta_noCR.csv
 mv -f meta_noCR.csv meta.csv
 
+# remove asterisks if they exist
+# the column names sometimes get asterisks from Kaleidoscope
+tr -d '*' < meta.csv > meta_noAst.csv
+mv -f meta_noAst.csv meta.csv
+
 # make MANUAL ID column blank
 echo "making manual id column blank ..."
-perl -F"," -i -lane 'if($.==1){print; for($i=0;$i<@F;$i++){if($F[$i] =~ /^MANUAL ID$/){$Spalte=$i}}}else{$F[$Spalte] = ""; print join(",", @F)}' meta.csv
+perl -i -lne '@F = split(",", $_, -1); if($.==1){print; for($i=0;$i<@F;$i++){if($F[$i] =~ /^MANUAL ID$/){$Spalte=$i}}}else{$F[$Spalte] = ""; print join(",", @F)}' id.csv
 
 # sort meta.csv by date, then by time
 echo "sorting meta.csv by date and time ..."
@@ -70,7 +75,7 @@ rm -f atem.vsc
 # add line number column
 echo "adding a record number column ..."
 mv meta.csv atem.vsc
-perl -F"," -ne 'chomp; if($.==1){print $_, ",NR", "\n";}else{print $_, ",", $.-1, "\n";}' atem.vsc > meta.csv
+perl -lne 'chomp; if($.==1){print $_, ",NR";}else{print $_, ",", $.-1;}' atem.vsc > id.csv
 rm -f atem.vsc
 
 # check if a directory called NOISE exists
@@ -86,7 +91,8 @@ fi
 
 # create id_notes.csv for note taking in spreadsheet app
 echo "Creating file id_notes.csv for note taking ..."
-cut -d, -f3,5-6,18,24,30 meta.csv > id_notes.csv
+INFILECOLNUM=$(head -n 1 meta.csv | tr ',' '\n' | nl | grep "IN FILE" | cut -f1)
+cut -d, -f$INFILECOLNUM,5-6,18,24,30 meta.csv > id_notes.csv
 
 # creating meta_NR.kml
 echo "Creating meta_NR.kml ..."
