@@ -31,13 +31,13 @@ def xml2csv(INPATH, OUTCSV):
     p = re.compile('.*/')
 
     # create iterator over XML files with iglob
-    #py2: xml_it = glob.iglob(inpath + '/BL*/*xml')
-    xml_it = glob.iglob(inpath + '/BL*/*xml', recursive=True)
+    xml_it = glob.iglob(inpath + '/BL*/*xml')
+    #py3: xml_it = glob.iglob(inpath + '/BL*/*xml', recursive=True)
 
     with open(outCSV, 'w') as outfile:
-        print('Folder', 'wavFileName', 'Timestamp', 'Temperature', 'Duration', 'Latitude', 'Longitude', sep=',', file=outfile)
-        #py2: header = ','.join(['Folder', 'wavFileName', 'Timestamp', 'Temperature', 'Duration', 'Latitude', 'Longitude'])
-        #py2: outfile.write(header + '\n')
+        #py3: print('Folder', 'wavFileName', 'Timestamp', 'Temperature', 'Duration', 'Latitude', 'Longitude', sep=',', file=outfile)
+        header = ','.join(['Folder', 'wavFileName', 'Timestamp', 'Temperature', 'Duration', 'Latitude', 'Longitude'])
+        outfile.write(header + '\n')
         count_xml = 0
         for xml in xml_it:
             count_xml += 1
@@ -54,8 +54,8 @@ def xml2csv(INPATH, OUTCSV):
             try:
                 tree = ET.parse(xml)
             except:
-                print('Cannot parse file:', xml)
-                print('May be corrupted. Skipping that file...')
+                print 'Cannot parse file: ', xml
+                print 'May be corrupted. Skipping that file...'
                 continue # ... with next XML file
             root = tree.getroot()
 
@@ -66,26 +66,26 @@ def xml2csv(INPATH, OUTCSV):
             try:
                 timestamp = root.find('DateTime').text
             except AttributeError:
-                print('no timestamp found in:', xml)
+                print 'no timestamp found in: ', xml
             try:
                 temperature = root.find('Temperature').text
             except AttributeError:
-                print('no temperature found in:', xml)
+                print 'no temperature found in: ', xml
             try:
                 duration = root.find('Duration').text
             except AttributeError:
-                print('no duration found in:', xml)
+                print 'no duration found in: ', xml
             try:
                 latitude, longitude = root.find('GPS').find('Position').text.split(' ')
             except AttributeError:
-                print('no GPS position found in:', xml)
+                print 'no GPS position found in: ', xml
 
             # print out values in CSV format
-            print(folder, wav, timestamp, temperature, duration, latitude, longitude, sep=',', file=outfile)
-            #py2: outfile.write(','.join([folder, wav, timestamp, temperature, duration, latitude, longitude]) + '\n')
+            #py3: print(folder, wav, timestamp, temperature, duration, latitude, longitude, sep=',', file=outfile)
+            outfile.write(','.join([folder, wav, timestamp, temperature, duration, latitude, longitude]) + '\n')
             # report progress
             if count_xml % 100 == 0:
-                print('Finished reading', count_xml, 'XML files ...')
+                print 'Finished reading', count_xml, 'XML files ...'
 
     return
 
