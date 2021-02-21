@@ -15,6 +15,8 @@ If you have decompressed the zip archive to its own directory (e.g. MyColleagues
 	unzip MyColleaguesRecordings.zip -d MyColleaguesRecordings
 
 then you can open meta.csv with Kaleidoscope after setting the input directory in Kaleidsocope's Control Panel to MyColleaguesRecordings (that means the whole path to that directory). That way Kaleidoscope is able to find the audio recordings listed in meta.csv. 
+
+In Kaleidoscope, be sure to show the \"ID NOTES\" column from meta.csv (under File > Edit columns...) to see your colleagues comments on individual recordings. Also make sure the \"NR\" column is visible, since it allows you together with meta_NR.kml to quickly find out where a specific recording was made.
 " > README
 
 # create a zip archive with the selected files
