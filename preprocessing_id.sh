@@ -94,6 +94,11 @@ echo "Creating file id_notes.csv for note taking ..."
 INFILECOLNUM=$(head -n 1 id.csv | tr ',' '\n' | nl | grep "IN FILE" | cut -f1)
 cut -d, -f$INFILECOLNUM,5-6,18,24,30 id.csv > id_notes.csv
 
+# add geographic coordinates from meta.csv
+echo "adding geographic coordinate columns from meta.csv..."
+join -t"," -1 4 -2 1 <(sort -t, -k4,4 id.csv) <(sort -t, -k3,3 meta.csv | cut -d, -f3,11,12) > id_with_LatLon.csv
+mv -f id_with_LatLon.csv id.csv
+
 # # creating id_NR.kml
 # echo "Creating id_NR.kml ..."
-# style2kml.pl --meta id.csv --NR > id_NR.kml
+style2kml.pl --meta id.csv --NR > id_NR.kml
