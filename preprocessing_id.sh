@@ -96,8 +96,18 @@ cut -d, -f$INFILECOLNUM,10,11,16,37,45 id.csv > id_notes.csv
 
 # add geographic coordinates from meta.csv
 echo "adding geographic coordinate columns from meta.csv..."
-join -t"," -1 4 -2 1 <(sort -t, -k4,4 id.csv) <(sort -t, -k3,3 meta.csv | cut -d, -f3,11,12) > id_with_LatLon.csv
-mv -f id_with_LatLon.csv id.csv
+mv id.csv vsc.di
+## sort id.csv and meta.csv by file name before joining
+cat <(head -n 1 vsc.di) <(tail -n +2 vsc.di | sort -t, -k4,4) > id.csv
+rm -f vsc.di
+mv meta.csv vsc.atem
+cat <(head -n 1 vsc.atem) <(tail -n +2 vsc.atem | sort -t, -k3,3) > meta.csv
+rm -f vsc.atem
+## join geographic coordinate columns to id.csv
+join -t"," -1 4 -2 1 id.csv <(cut -d, -f3,11,12 meta.csv) > id_with_LatLon.csv
+## sort by NR column again
+cat <(head -n 1 id_with_LatLon.csv) <(tail -n +2 id_with_LatLon.csv | sort -t, -nk45,45) > id.csv
+rm -f id_with_LatLon.csv
 
 # # creating id_NR.kml
 # echo "Creating id_NR.kml ..."
