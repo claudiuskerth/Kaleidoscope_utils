@@ -92,7 +92,7 @@ fi
 # create id_notes.csv for note taking in spreadsheet app
 echo "Creating file id_notes.csv for note taking ..."
 INFILECOLNUM=$(head -n 1 id.csv | tr ',' '\n' | nl | grep "IN FILE" | cut -f1)
-cut -d, -f$INFILECOLNUM,5-6,18,24,30 id.csv > id_notes.csv
+cut -d, -f$INFILECOLNUM,10,11,16,37,45 id.csv > id_notes.csv
 
 # add geographic coordinates from meta.csv
 echo "adding geographic coordinate columns from meta.csv..."
