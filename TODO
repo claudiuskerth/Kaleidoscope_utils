@@ -4,6 +4,9 @@ PRE-PROCESSING:
 
 	[+] hardcode kml style from Wildlife Acoustics in style2kml.pl, makes it easier to use, also for data from Batlogger
 
+	[-] select columns by name not number, to make the code more bug resistent when output files of K change
+
+	[+] fix preprocessing_id.sh
 
 POST-PROCESSING:
 
@@ -32,6 +35,10 @@ POST-PROCESSING:
 
 	[+] add feature 2) as a new utility script; it may be nice to separate this from postprocessing,
 	    allowing to create a zip archive from files in the output directory at any time
+
+	[+] fix postprocessing_id.sh
+
+	[-] select columns by name, not number to make the code more bug resistent when output files of K change
 
 	[-] write usage for the set of tools
 
