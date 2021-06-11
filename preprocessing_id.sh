@@ -17,9 +17,82 @@ then
 		echo -e "\t+ add a record number column to id.csv"
 		echo -e "\t+ insert the label noise into the column AUTO ID for recordings that have been moved to the subfolder NOISE"
 		echo -e "\t+ create a file called id_notes.csv from id.csv for note taking in a spreadsheet app"
+		echo -e "\t+ add geographic coordinates from meta.csv to id.csv (and Timestamp and Temperature in case of Batlogger data)"
+		echo -e "\t+ create a KML file with the locations of all recordings to use for manual review of recordings"
 		echo
 	fi
 	exit 0
+fi
+
+
+# ask the user for important information
+echo "Is the data comming from a Batlogger or from a Wildlife Acoustics device (EMT oder SM4BAT)? Type either Batlogger, EMT or SM4BAT followed by [ENTER]:"
+read datasource
+while [ $datasource != 'Batlogger' -a $datasource != 'EMT' -a $datasource != 'SM4BAT' ]
+do
+		echo "You've typed: $datasource. Check your spelling and try again:!"
+		read datasource
+done
+if [ $datasource == 'Batlogger' ]
+then
+		echo 'Your data is coming from a Batlogger. Is that rigth? Type Y to continue or N to exit now:'
+		read input
+		while [[ $input != [YN] ]]
+		do
+				echo "Type Y or N:"
+				read input
+		done
+		if [ $input == 'Y' ]
+		then
+				echo "Going to treat your data as Batlogger data..."
+				echo "Have you run xml2csv.py on the BL... folder(s) of your audio data set yet? Type Y or N:"
+				read input
+				while [[ $input != [YN] ]]
+				do
+						echo "Type Y or N:"
+						read input
+				done
+				if [ $input == 'Y' ]
+				then
+						echo "Good! Where can I find the output CSV file from this xml2csv.py run containing the meta data?"
+						echo "Give me a relative or absolute path including file name:"
+						read metadata
+						while [ ! -f $metadata ]
+						do
+								echo "Sorry, I could not find this file. Check the path and file name, then try again."
+								echo "Or type Ctrl + C to exit and come back later."
+								read metadata;
+						done
+						echo "Ok, going to use the meta data in $metadata."
+				elif [ $input == 'N' ]
+				then
+						echo "Well, you need to do that first before running this script. See you later :-)"
+						exit 1;
+				fi
+		elif [ $input == 'N' ]
+		then
+				echo "Ok, exiting now. No worries, just try again :-)"
+				exit 1;
+		fi
+elif [ $datasource == 'EMT' -o  $datasource == 'SM4BAT' ]
+then
+		echo "Your data is coming from a Wildlife Acoustics device. Is that rigth? Type Y to continue or N to exit now:"
+		read input
+		while [[ $input != [YN] ]]
+		do
+				echo "Type Y or N:"
+				read input
+		done
+		if [ $input == 'Y' ]
+		then
+				echo "Going to treat your data as Wildlife Acoustic data..."
+		elif [ $input == 'N' ]
+		then
+				echo "Ok, exiting now. No worries, just try again :-)"
+				exit 1;
+		fi
+else
+		exit 1;
 fi
 
 # check for signs that preprocessing has already been run 
@@ -66,11 +139,21 @@ mv -f id_noAst.csv id.csv
 echo "making manual id column blank ..."
 perl -i -lne '@F = split(",", $_, -1); if($.==1){print; for($i=0;$i<@F;$i++){if($F[$i] =~ /^MANUAL ID$/){$Spalte=$i}}}else{$F[$Spalte] = ""; print join(",", @F)}' id.csv
 
-# sort id.csv by date, then by time
-echo "sorting id.csv by date and time ..."
-mv id.csv atem.vsc
-cat <(head -1 atem.vsc) <(tail +2 atem.vsc | sort -t, -k10 -k11) > id.csv
-rm -f atem.vsc
+if [ $datasource == 'EMT' -o  $datasource == 'SM4BAT' ]
+then
+		# sort id.csv by date, then by time
+		echo "sorting id.csv by date and time ..."
+		mv id.csv atem.vsc
+		cat <(head -1 atem.vsc) <(tail +2 atem.vsc | sort -t, -k10 -k11) > id.csv
+		rm -f atem.vsc
+else
+		# sort id.csv by filename
+		echo "sorting id.csv by file name ..."
+		INFILECOLNUM=$(head -n 1 id.csv | tr ',' '\n' | nl | grep "IN FILE" | cut -f1)
+		mv id.csv atem.vsc
+		cat <(head -1 atem.vsc) <(tail +2 atem.vsc | sort -t, -k $INFILECOLNUM ) > id.csv
+		rm -f atem.vsc
+fi
 
 # add line number column
 echo "adding a record number column ..."
@@ -91,24 +174,33 @@ fi
 
 # create id_notes.csv for note taking in spreadsheet app
 echo "Creating file id_notes.csv for note taking ..."
-INFILECOLNUM=$(head -n 1 id.csv | tr ',' '\n' | nl | grep "IN FILE" | cut -f1)
 cut -d, -f$INFILECOLNUM,10,11,16,37,45 id.csv > id_notes.csv
 
-# add geographic coordinates from meta.csv
-echo "adding geographic coordinate columns from meta.csv..."
-mv id.csv vsc.di
-## sort id.csv and meta.csv by file name before joining
-cat <(head -n 1 vsc.di) <(tail -n +2 vsc.di | sort -t, -k4,4) > id.csv
-rm -f vsc.di
-mv meta.csv vsc.atem
-cat <(head -n 1 vsc.atem) <(tail -n +2 vsc.atem | sort -t, -k3,3) > meta.csv
-rm -f vsc.atem
-## join geographic coordinate columns to id.csv
-join -t"," -1 4 -2 1 id.csv <(cut -d, -f3,11,12 meta.csv) > id_with_LatLon.csv
-## sort by NR column again
-cat <(head -n 1 id_with_LatLon.csv) <(tail -n +2 id_with_LatLon.csv | sort -t, -nk45,45) > id.csv
-rm -f id_with_LatLon.csv
+if [ $datasource == 'EMT' -o  $datasource == 'SM4BAT' ]
+then
+		# add geographic coordinates from meta.csv
+		echo "adding geographic coordinate columns from Kaleidoscope's meta.csv..."
+		mv id.csv vsc.di
+		## sort id.csv and meta.csv by file name before joining
+		cat <(head -n 1 vsc.di) <(tail -n +2 vsc.di | sort -t, -k $INFILECOLNUM,$INFILECOLNUM) > id.csv
+		rm -f vsc.di
+		mv meta.csv vsc.atem
+		cat <(head -n 1 vsc.atem) <(tail -n +2 vsc.atem | sort -t, -k3,3) > meta.csv
+		rm -f vsc.atem
+		## join geographic coordinate columns to id.csv
+		join -t"," -1 $INFILECOLNUM -2 1 id.csv <(cut -d, -f3,11,12 meta.csv) > id_with_LatLon.csv
+		## sort by NR column again
+		cat <(head -n 1 id_with_LatLon.csv) <(tail -n +2 id_with_LatLon.csv | sort -t, -nk45,45) > id.csv
+		rm -f id_with_LatLon.csv
+else
+		## add meta data, including coordinates, from output file of xml2csv.py
+		echo "adding geographic coordinate columns from xml2csv.py's meta.csv..."
+		mv id.csv vsc.di
+		## join geographic coordinate columns to id.csv
+		join -t"," -1 $INFILECOLNUM -2 1 vsc.di <(cut -d, -f2-4,6-7 $metadata | sed 's/wavFileName/IN FILE/') > id.csv
+		rm -f vsc.di
+fi
 
-# # creating id_NR.kml
-# echo "Creating id_NR.kml ..."
+# creating id_NR.kml
+echo "Creating id_NR.kml ..."
 style2kml.pl --meta id.csv --NR > id_NR.kml
