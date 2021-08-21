@@ -176,17 +176,15 @@ fi
 echo "Creating file id_notes.csv for note taking ..."
 cut -d, -f$INFILECOLNUM,10,11,16,37,45 id.csv > id_notes.csv
 
+# add geographic coordinates from meta.csv
+## sort  meta.csv by file name before joining
+cp $metadata vsc.atem
+cat <(head -n 1 vsc.atem) <(tail -n +2 vsc.atem | sort -t, -k2,2) > $metadata
+rm -f vsc.atem
+
 if [ $datasource == 'EMT' -o  $datasource == 'SM4BAT' ]
 then
-		# add geographic coordinates from meta.csv
 		echo "adding geographic coordinate columns from Kaleidoscope's meta.csv..."
-		mv id.csv vsc.di
-		## sort id.csv and meta.csv by file name before joining
-		cat <(head -n 1 vsc.di) <(tail -n +2 vsc.di | sort -t, -k $INFILECOLNUM,$INFILECOLNUM) > id.csv
-		rm -f vsc.di
-		mv meta.csv vsc.atem
-		cat <(head -n 1 vsc.atem) <(tail -n +2 vsc.atem | sort -t, -k3,3) > meta.csv
-		rm -f vsc.atem
 		## join geographic coordinate columns to id.csv
 		join -t"," -1 $INFILECOLNUM -2 1 id.csv <(cut -d, -f3,11,12 meta.csv) > id_with_LatLon.csv
 		## sort by NR column again
@@ -195,8 +193,8 @@ then
 else
 		## add meta data, including coordinates, from output file of xml2csv.py
 		echo "adding geographic coordinate columns from xml2csv.py's meta.csv..."
-		mv id.csv vsc.di
 		## join geographic coordinate columns to id.csv
+		mv id.csv vsc.di
 		join -t"," -1 $INFILECOLNUM -2 1 vsc.di <(cut -d, -f2-4,6-7 $metadata | sed 's/wavFileName/IN FILE/') > id.csv
 		rm -f vsc.di
 fi
